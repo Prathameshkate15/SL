@@ -241,6 +241,7 @@
                     alert('Please select a gender');
                     return false;
                 }
+                // Note: genderElement.value is safe to access here because we return above if null
                 
                 // Show success message
                 document.getElementById('successMessage').style.display = 'block';

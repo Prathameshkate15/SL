@@ -131,14 +131,14 @@
         
         function calculate() {
             try {
-                // Validate and evaluate the expression safely
+                // EDUCATIONAL NOTE: This uses Function constructor with input validation.
+                // For production, use a proper expression parser library like math.js
                 // Only allow numbers and basic operators
                 if (!/^[0-9+\-*/.%() ]+$/.test(currentValue)) {
                     throw new Error('Invalid characters in expression');
                 }
                 
-                // Use Function constructor as a safer alternative to eval
-                // Still sanitized with regex check above
+                // Use Function constructor (sanitized with regex above)
                 let result = new Function('return ' + currentValue)();
                 
                 currentValue = result.toString();
