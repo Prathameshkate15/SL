@@ -235,6 +235,13 @@
             }
             
             if (isValid) {
+                // Validate gender selection
+                const genderElement = document.querySelector('input[name="gender"]:checked');
+                if (!genderElement) {
+                    alert('Please select a gender');
+                    return false;
+                }
+                
                 // Show success message
                 document.getElementById('successMessage').style.display = 'block';
                 
@@ -244,7 +251,7 @@
                     email: email,
                     phone: phone,
                     age: age,
-                    gender: document.querySelector('input[name="gender"]:checked').value,
+                    gender: genderElement.value,
                     course: document.getElementById('course').value,
                     dob: document.getElementById('dob').value,
                     address: document.getElementById('address').value
