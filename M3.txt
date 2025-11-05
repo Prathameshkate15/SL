@@ -1,0 +1,140 @@
+// Clean up previous collection
+db.Employee.drop();
+
+// Insert at least 5 documents
+db.Employee.insertMany([
+  {
+    Emp_id: 101,
+    Name: { FName: "Ravi", LName: "Kumar" },
+    "Company Name": "TCS",
+    Salary: 70000,
+    Designation: "Developer",
+    Age: 30,
+    Expertise: ["Java", "Microservices"],
+    DOB: new Date("1994-03-12"),
+    "Email id": "ravi.kumar@tcs.com",
+    Contact: "9111111111",
+    Address: [
+      { city: "Pune", Pin_code: "411001" }, // For Query 3
+      { city: "Patna", Pin_code: "800001" }
+    ]
+  },
+  {
+    Emp_id: 102,
+    Name: { FName: "Sunita", LName: "Rao" },
+    "Company Name": "Infosys",
+    Salary: 85000,
+    Designation: "Developer",
+    Age: 34,
+    Expertise: ["Python", "Data Science"],
+    DOB: new Date("1990-08-25"),
+    "Email id": "sunita.rao@infosys.com",
+    Contact: "9222222222",
+    Address: [
+      { city: "Bangalore", Pin_code: "560001" }
+    ]
+  },
+  {
+    Emp_id: 103,
+    Name: { FName: "Vijay", LName: "Nair" },
+    "Company Name": "TCS",
+    Salary: 48000,
+    Designation: "Tester",
+    Age: 26,
+    Expertise: ["Automation", "QTP"],
+    DOB: new Date("1998-06-18"),
+    "Email id": "vijay.nair@tcs.com",
+    Contact: "9333333333",
+    Address: [
+      { city: "Mumbai", Pin_code: "400001" }
+    ]
+  },
+  {
+    Emp_id: 104,
+    Name: { FName: "Meera", LName: "Desai" },
+    "Company Name": "Wipro",
+    Salary: 95000,
+    Designation: "Manager",
+    Age: 38,
+    Expertise: ["Project Management", "Agile"],
+    DOB: new Date("1986-12-01"),
+    "Email id": "meera.desai@wipro.com",
+    Contact: "9444444444",
+    Address: [
+      { city: "Pune", Pin_code: "411007" }
+    ]
+  },
+  {
+    Emp_id: 105,
+    Name: { FName: "Arjun", LName: "Reddy" },
+    "Company Name": "Infosys",
+    Salary: 72000,
+    Designation: "Developer",
+    Age: 29,
+    Expertise: ["React", "Node.js"],
+    DOB: new Date("1995-10-05"),
+    "Email id": "arjun.reddy@infosys.com",
+    Contact: "9555555555",
+    Address: [
+      { city: "Hyderabad", Pin_code: "500001" }
+    ]
+  }
+]);
+
+print("--- Data Insertion Complete ---");
+
+// 1. Creates a new document if no document contains {Designation: "Tester", Company_name: "TCS", Age: 25}
+print("\n--- 1. Upsert Tester at TCS ---");
+const upsertResult = db.Employee.updateOne(
+  { Designation: "Tester", "Company Name": "TCS", Age: 25 },
+  {
+    $setOnInsert: {
+      Emp_id: 106,
+      Name: { FName: "New", LName: "Tester" },
+      Salary: 40000,
+      Expertise: ["Manual Testing"],
+      DOB: new Date("1999-01-01"),
+      "Email id": "new.tester@tcs.com",
+      Contact: "9999999999",
+      Address: [{ city: "Chennai", Pin_code: "600001" }]
+    }
+  },
+  { upsert: true }
+);
+printjson(upsertResult);
+
+// 2. Finds all employees working with Company_name: "TCS" and increase their salary by 2000
+print("\n--- 2. Increase TCS Salary by 2k ---");
+const updateTCSResult = db.Employee.updateMany(
+  { "Company Name": "TCS" },
+  { $inc: { Salary: 2000 } }
+);
+printjson(updateTCSResult);
+print("--- Updated TCS employees: ---");
+printjson(db.Employee.find({ "Company Name": "TCS" }).toArray());
+
+// 3. Matches all documents where Address is an embedded doc that contains only {city: "Pune", Pin_code: "411001"}
+print("\n--- 3. Find address with exact match {city: 'Pune', Pin_code: '411001'} ---");
+printjson(db.Employee.find({
+  Address: { city: "Pune", Pin_code: "411001" }
+}).toArray());
+
+// 4. Find employee details who are working as "Developer" or "Tester"
+print("\n--- 4. Find Developers OR Testers ---");
+printjson(db.Employee.find({
+  Designation: { $in: ["Developer", "Tester"] }
+}).toArray());
+
+// 5. Drop Single documents where designation="Developer"
+print("\n--- 5. Delete ONE Developer ---");
+const deleteResult = db.Employee.deleteOne({
+  Designation: "Developer"
+});
+printjson(deleteResult);
+print("--- Remaining documents after delete: ---");
+printjson(db.Employee.find().toArray());
+
+// 6. Count number of documents in employee collection
+print("\n--- 6. Count of all documents ---");
+const count = db.Employee.countDocuments();
+print("Total documents: " + count);

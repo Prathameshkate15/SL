@@ -1,0 +1,136 @@
+// Clean up previous collection
+db.Employee.drop();
+
+// Insert at least 5 documents
+db.Employee.insertMany([
+  {
+    Name: { FName: "Rahul", LName: "Sharma" },
+    "Company Name": "TCS",
+    Salary: 35000,
+    Designation: "Programmer",
+    Age: 28,
+    Expertise: ["Java", "Spring", "Mysql"],
+    DOB: new Date("1996-05-10"),
+    "Email id": "rahul.sharma@tcs.com",
+    Contact: "9876543210",
+    Address: [
+      { PAddr: "123 Main St, Pune", LAddr: "123 Main St, Pune" }
+    ]
+  },
+  {
+    Name: { FName: "Priya", LName: "Singh" },
+    "Company Name": "Infosys",
+    Salary: 80000,
+    Designation: "Developer",
+    Age: 32,
+    Expertise: ["Python", "Django", "Mongodb"],
+    DOB: new Date("1992-11-20"),
+    "Email id": "priya.singh@infosys.com",
+    Contact: "9876543211",
+    Address: [
+      { PAddr: "456 Oak Ave, Bangalore", LAddr: "456 Oak Ave, Bangalore" }
+    ]
+  },
+  {
+    Name: { FName: "Amit", LName: "Patel" },
+    "Company Name": "Infosys",
+    Salary: 45000,
+    Designation: "Tester",
+    Age: 25,
+    Expertise: ["Selenium", "Java"],
+    DOB: new Date("1999-02-15"),
+    "Email id": "amit.patel@infosys.com",
+    Contact: "9876543212",
+    Address: [
+      { PAddr: "789 Pine Ln, Pune", LAddr: "789 Pine Ln, Pune" }
+    ]
+  },
+  {
+    Name: { FName: "Sneha", LName: "Verma" },
+    "Company Name": "TCS",
+    Salary: 60000,
+    Designation: "Programmer",
+    Age: 29,
+    Expertise: ["HTML", "CSS", "Javascript"],
+    DOB: new Date("1995-07-30"),
+    "Email id": "sneha.verma@tcs.com",
+    Contact: "9876543213",
+    Address: [
+      { PAddr: "321 Elm Blvd, Delhi", LAddr: "321 Elm Blvd, Delhi" }
+    ]
+  },
+  {
+    Name: { FName: "Zahir", LName: "Khan" },
+    "Company Name": "Wipro",
+    Salary: 90000,
+    Designation: "Manager",
+    Age: 40,
+    Expertise: ["Mongodb", "Mysql", "Cassandra"],
+    DOB: new Date("1984-01-05"),
+    "Email id": "zahir.khan@wipro.com",
+    Contact: "9876543214",
+    Address: [
+      { PAddr: "654 Maple Dr, Mumbai", LAddr: "654 Maple Dr, Mumbai" }
+    ]
+  }
+]);
+
+print("--- Data Insertion Complete ---");
+
+// 1. Find name of Employee where age is less than 30 and salary more than 50000
+print("\n--- 1. Age < 30 AND Salary > 50k (Find Name) ---");
+printjson(db.Employee.find(
+  {
+    Age: { $lt: 30 },
+    Salary: { $gt: 50000 }
+  },
+  { Name: 1, _id: 0 }
+).toArray());
+
+// 2. Creates a new document if no document contains {Designation: "Tester", Company_name: "TCS", Age: 25}
+print("\n--- 2. Upsert Tester at TCS ---");
+const upsertResult = db.Employee.updateOne(
+  { Designation: "Tester", "Company Name": "TCS", Age: 25 },
+  {
+    $setOnInsert: {
+      Name: { FName: "New", LName: "Tester" },
+      Salary: 40000,
+      Expertise: ["Manual Testing"],
+      DOB: new Date("1999-01-01"),
+      "Email id": "new.tester@tcs.com",
+      Contact: "9999999999",
+      Address: [{ PAddr: "TCS Hinjewadi", LAddr: "TCS Hinjewadi" }]
+    }
+  },
+  { upsert: true }
+);
+printjson(upsertResult);
+
+// 3. Selects all documents where age < 30 OR salary > 40000
+print("\n--- 3. Age < 30 OR Salary > 40k ---");
+printjson(db.Employee.find({
+  $or: [
+    { Age: { $lt: 30 } },
+    { Salary: { $gt: 40000 } }
+  ]
+}).toArray());
+
+// 4. Find documents where Designation is not equal to "Developer"
+print("\n--- 4. Employees who are NOT Developers ---");
+printjson(db.Employee.find({
+  Designation: { $ne: "Developer" }
+}).toArray());
+
+// 5. Find _id, Designation, Address and Name from all documents where Company_name is "Infosys"
+print("\n--- 5. Find Infosys employees (specific fields) ---");
+printjson(db.Employee.find(
+  { "Company Name": "Infosys" },
+  { _id: 1, Designation: 1, Address: 1, Name: 1 }
+).toArray());
+
+// 6. Display only FName and LName of all Employees
+print("\n--- 6. Display only FName and LName of all ---");
+printjson(db.Employee.find(
+  {},
+  { "Name.FName": 1, "Name.LName": 1, _id: 0 }
+).toArray());

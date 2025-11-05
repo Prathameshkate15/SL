@@ -1,0 +1,59 @@
+print("--- Data Insertion Complete ---");
+
+// 1. Select all documents where Designation is "Programmer" and Salary > 30000
+print("\n--- 1. Programmers with Salary > 30k ---");
+printjson(db.Employee.find({
+  Designation: "Programmer",
+  Salary: { $gt: 30000 }
+}).toArray());
+
+// 2. Creates a new document if no document contains {Designation: "Tester", Company_name: "TCS", Age: 25}
+print("\n--- 2. Upsert Tester at TCS ---");
+const upsertResult = db.Employee.updateOne(
+  { Designation: "Tester", "Company Name": "TCS", Age: 25 },
+  {
+    $setOnInsert: {
+      Name: { FName: "New", LName: "Tester" },
+      Salary: 40000,
+      Expertise: ["Manual Testing"],
+      DOB: new Date("1999-01-01"),
+      "Email id": "new.tester@tcs.com",
+      Contact: "9999999999",
+      Address: [{ PAddr: "TCS Hinjewadi", LAddr: "TCS Hinjewadi" }]
+    }
+  },
+  { upsert: true }
+);
+printjson(upsertResult);
+
+// 3. Increase salary of each Employee working with "Infosys" by 10000
+print("\n--- 3. Increase Infosys Salary by 10k ---");
+const updateInfosysResult = db.Employee.updateMany(
+  { "Company Name": "Infosys" },
+  { $inc: { Salary: 10000 } }
+);
+printjson(updateInfosysResult);
+print("--- Updated Infosys employees: ---");
+printjson(db.Employee.find({ "Company Name": "Infosys" }).toArray());
+
+// 4. Finds all employees working with "TCS" and reduce their salary by 5000
+print("\n--- 4. Decrease TCS Salary by 5k ---");
+const updateTCSResult = db.Employee.updateMany(
+  { "Company Name": "TCS" },
+  { $inc: { Salary: -5000 } }
+);
+printjson(updateTCSResult);
+print("--- Updated TCS employees: ---");
+printjson(db.Employee.find({ "Company Name": "TCS" }).toArray());
+
+// 5. Return documents where Designation is not equal to "Tester"
+print("\n--- 5. Employees who are NOT Testers ---");
+printjson(db.Employee.find({
+  Designation: { $ne: "Tester" }
+}).toArray());
+
+// 6. Find all employee with Exact Match on an Array having Expertise: ['Mongodb', 'Mysql', 'Cassandra']
+print("\n--- 6. Exact match on Expertise array ---");
+printjson(db.Employee.find({
+  Expertise: ["Mongodb", "Mysql", "Cassandra"]
+}).toArray());
