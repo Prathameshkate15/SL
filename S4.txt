@@ -1,0 +1,99 @@
+SET foreign_key_checks=0;
+DROP TABLE IF EXISTS Product;
+DROP TABLE IF EXISTS `Order`;
+DROP TABLE IF EXISTS Cust_Master;
+DROP VIEW IF EXISTS View1;
+SET foreign_key_checks=1;
+
+CREATE TABLE Cust_Master (
+    Cust_no VARCHAR(10) PRIMARY KEY,
+    Cust_name VARCHAR(100) NOT NULL,
+    Cust_addr VARCHAR(100)
+);
+
+CREATE TABLE `Order` (
+    Order_no VARCHAR(10) PRIMARY KEY,
+    Cust_no VARCHAR(10),
+    Order_date DATE,
+    Qty_Ordered INT,
+    FOREIGN KEY (Cust_no) REFERENCES Cust_Master(Cust_no)
+);
+
+CREATE TABLE Product (
+    Product_no VARCHAR(10) PRIMARY KEY,
+    Product_name VARCHAR(100),
+    Order_no VARCHAR(10),
+    FOREIGN KEY (Order_no) REFERENCES `Order`(Order_no)
+);
+
+
+
+INSERT INTO Cust_Master VALUES ('C1001', 'Rahul', 'Pune');
+INSERT INTO Cust_Master VALUES ('C1002', 'Ganesh', 'Banglore');
+INSERT INTO Cust_Master VALUES ('C1003', 'Priya', 'Mumbai');
+INSERT INTO Cust_Master VALUES ('C1005', 'Amit', 'Manglore');
+INSERT INTO Cust_Master VALUES ('C1007', 'Zahir', 'Delhi');
+INSERT INTO Cust_Master VALUES ('C1008', 'Sneha', 'Banglore');
+
+INSERT INTO `Order` VALUES ('O-2001', 'C1001', '2025-10-01', 5);
+INSERT INTO `Order` VALUES ('O-2002', 'C1002', '2025-10-02', 2);
+INSERT INTO `Order` VALUES ('O-2003', 'C1005', '2025-10-02', 1);
+INSERT INTO `Order` VALUES ('O-2004', 'C1008', '2025-10-03', 10);
+INSERT INTO `Order` VALUES ('O-2005', 'C1001', '2025-10-04', 3);
+INSERT INTO `Order` VALUES ('O-2006', 'C1007', '2025-10-04', 1);
+
+INSERT INTO Product VALUES ('P-301', 'Laptop', 'O-2001');
+INSERT INTO Product VALUES ('P-302', 'Mouse', 'O-2002');
+INSERT INTO Product VALUES ('P-303', 'Keyboard', 'O-2003');
+INSERT INTO Product VALUES ('P-304', 'Monitor', 'O-2004');
+INSERT INTO Product VALUES ('P-305', 'Webcam', 'O-2005');
+INSERT INTO Product VALUES ('P-306', 'Headphones', 'O-2006');
+
+
+
+
+-- 1. List names of customers having 'A' as second letter in their name.
+SELECT Cust_name FROM Cust_Master WHERE Cust_name LIKE '_a%';
+
+-- 2. Display order from Customer no C1002, C1005, C1007 and C1008
+SELECT * FROM `Order` WHERE Cust_no IN ('C1002', 'C1005', 'C1007', 'C1008');
+
+-- 3. List Clients who stay in either 'Banglore or 'Manglore'
+SELECT * FROM Cust_Master WHERE Cust_addr IN ('Banglore', 'Manglore');
+
+-- 4. Display name of customers & the product name they have purchase
+SELECT c.Cust_name, p.Product_name
+FROM Cust_Master c
+JOIN `Order` o ON c.Cust_no = o.Cust_no
+JOIN Product p ON o.Order_no = p.Order_no;
+
+
+
+-- 5. Create view View1 consisting of Cust_name, Product_name.
+CREATE VIEW View1 AS
+SELECT c.Cust_name, p.Product_name
+FROM Cust_Master c
+JOIN `Order` o ON c.Cust_no = o.Cust_no
+JOIN Product p ON o.Order_no = p.Order_no;
+
+-- (You can run this to check the view)
+SELECT * FROM View1;
+
+-- 6. Display product_name and quantity purchase by each customer
+SELECT c.Cust_name, p.Product_name, o.Qty_Ordered
+FROM Cust_Master c
+JOIN `Order` o ON c.Cust_no = o.Cust_no
+JOIN Product p ON o.Order_no = p.Order_no
+ORDER BY c.Cust_name;
+
+-- 7. Perform different joint operation.
+-- (INNER JOIN - only customers who have orders)
+SELECT c.Cust_name, o.Order_no
+FROM Cust_Master c
+INNER JOIN `Order` o ON c.Cust_no = o.Cust_no;
+
+-- (LEFT JOIN - all customers, even if they have no orders)
+SELECT c.Cust_name, o.Order_no
+FROM Cust_Master c
+LEFT JOIN `Order` o ON c.Cust_no = o.Cust_no;
+

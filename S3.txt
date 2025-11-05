@@ -1,0 +1,125 @@
+SET foreign_key_checks=0;
+DROP TABLE IF EXISTS branch;
+DROP TABLE IF EXISTS customer;
+DROP TABLE IF EXISTS account;
+DROP TABLE IF EXISTS loan;
+DROP TABLE IF EXISTS depositor;
+DROP TABLE IF EXISTS borrower;
+SET foreign_key_checks=1;
+
+CREATE TABLE branch (
+    branch_name VARCHAR(100) PRIMARY KEY,
+    branch_city VARCHAR(100) NOT NULL,
+    assets DECIMAL(12, 2)
+);
+
+CREATE TABLE customer (
+    cust_name VARCHAR(100) PRIMARY KEY,
+    cust_street VARCHAR(100),
+    cust_city VARCHAR(100)
+);
+
+CREATE TABLE account (
+    acc_no VARCHAR(20) PRIMARY KEY,
+    branch_name VARCHAR(100),
+    balance DECIMAL(10, 2) NOT NULL,
+    FOREIGN KEY (branch_name) REFERENCES branch(branch_name)
+);
+
+CREATE TABLE loan (
+    loan_no VARCHAR(20) PRIMARY KEY,
+    branch_name VARCHAR(100),
+    amount DECIMAL(10, 2) NOT NULL,
+    FOREIGN KEY (branch_name) REFERENCES branch(branch_name)
+);
+
+CREATE TABLE depositor (
+    cust_name VARCHAR(100),
+    acc_no VARCHAR(20),
+    PRIMARY KEY (cust_name, acc_no),
+    FOREIGN KEY (cust_name) REFERENCES customer(cust_name),
+    FOREIGN KEY (acc_no) REFERENCES account(acc_no)
+);
+
+CREATE TABLE borrower (
+    cust_name VARCHAR(100),
+    loan_no VARCHAR(20),
+    PRIMARY KEY (cust_name, loan_no),
+    FOREIGN KEY (cust_name) REFERENCES customer(cust_name),
+    FOREIGN KEY (loan_no) REFERENCES loan(loan_no)
+);
+
+
+INSERT INTO branch VALUES ('Wadia College Branch', 'Pune', 7500000);
+INSERT INTO branch VALUES ('MG Road', 'Mumbai', 9000000);
+INSERT INTO branch VALUES ('Deccan', 'Pune', 8200000);
+
+INSERT INTO customer VALUES ('Rahul', '123 Main St', 'Pune');
+INSERT INTO customer VALUES ('Priya', '456 Oak Ave', 'Mumbai');
+INSERT INTO customer VALUES ('Amit', '789 Pine Ln', 'Pune');
+INSERT INTO customer VALUES ('Sneha', '321 Elm Blvd', 'Delhi');
+INSERT INTO customer VALUES ('Rohan', '654 Maple Dr', 'Pune');
+
+INSERT INTO account VALUES ('A-201', 'Wadia College Branch', 30000);
+INSERT INTO account VALUES ('A-202', 'MG Road', 30000);
+INSERT INTO account VALUES ('A-203', 'Deccan', 5000);
+INSERT INTO account VALUES ('A-204', 'Wadia College Branch', 20000);
+INSERT INTO depositor VALUES ('Rahul', 'A-201');
+INSERT INTO depositor VALUES ('Priya', 'A-202');
+INSERT INTO depositor VALUES ('Amit', 'A-203');
+INSERT INTO depositor VALUES ('Sneha', 'A-204');
+
+INSERT INTO loan VALUES ('L-101', 'Wadia College Branch', 15000);
+INSERT INTO loan VALUES ('L-102', 'MG Road', 25000);
+INSERT INTO loan VALUES ('L-103', 'Deccan', 10000);
+INSERT INTO loan VALUES ('L-107', 'Deccan', 1400);
+INSERT INTO borrower VALUES ('Rahul', 'L-101');
+INSERT INTO borrower VALUES ('Priya', 'L-102');
+INSERT INTO borrower VALUES ('Amit', 'L-103');
+INSERT INTO borrower VALUES ('Sneha', 'L-107');
+
+
+-- 1. Find the branches where average account balance > 15000.
+SELECT branch_name, AVG(balance)
+FROM account
+GROUP BY branch_name
+HAVING AVG(balance) > 15000;
+
+-- 2. Find number of tuples in customer relation.
+SELECT COUNT(*) FROM customer;
+
+-- 3. Calculate total loan amount given by bank.
+SELECT SUM(amount) FROM loan;
+
+-- 5. Find the average account balance at each branch
+SELECT branch_name, AVG(balance)
+FROM account
+GROUP BY branch_name;
+
+-- 6. Find name of Customer and city where customer name starts with Letter P.
+SELECT cust_name, cust_city
+FROM customer
+WHERE cust_name LIKE 'P%';
+
+
+-- 4. Delete all loans with loan amount between 1300 and 1500
+-- First, delete from the 'child' table (borrower)
+DELETE FROM borrower
+WHERE loan_no IN (
+    SELECT loan_no FROM (
+        SELECT loan_no FROM loan WHERE amount BETWEEN 1300 AND 1500
+    ) AS temp
+);
+
+
+
+-- Now, delete from the 'parent' table (loan)
+DELETE FROM loan
+WHERE amount BETWEEN 1300 AND 1500;
+
+
+
+-- Check that the loan is gone from both tables
+SELECT * FROM loan WHERE loan_no = 'L-107';
+SELECT * FROM borrower WHERE loan_no = 'L-107';
+

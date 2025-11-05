@@ -1,0 +1,54 @@
+-- Setup
+DROP TABLE IF EXISTS Library_Audit;
+DROP TABLE IF EXISTS Library;
+
+CREATE TABLE Library (
+    book_id INT PRIMARY KEY,
+    book_title VARCHAR(200),
+    author VARCHAR(100)
+);
+CREATE TABLE Library_Audit (
+    audit_id INT PRIMARY KEY AUTO_INCREMENT,
+    action_type VARCHAR(10),
+    change_time TIMESTAMP,
+    old_book_id INT,
+    old_book_title VARCHAR(200),
+    old_author VARCHAR(100)
+);
+INSERT INTO Library VALUES (1, 'Database Systems', 'Korth');
+INSERT INTO Library VALUES (2, 'Operating Systems', 'Galvin');
+
+-- Trigger for UPDATE
+DROP TRIGGER IF EXISTS trg_library_audit_update;
+DELIMITER $$
+CREATE TRIGGER trg_library_audit_update
+AFTER UPDATE ON Library
+FOR EACH ROW
+BEGIN
+    INSERT INTO Library_Audit (action_type, change_time, old_book_id, old_book_title, old_author)
+    VALUES ('UPDATE', NOW(), OLD.book_id, OLD.book_title, OLD.author);
+END$$
+DELIMITER ;
+
+-- Trigger for DELETE
+DROP TRIGGER IF EXISTS trg_library_audit_delete;
+DELIMITER $$
+CREATE TRIGGER trg_library_audit_delete
+AFTER DELETE ON Library
+FOR EACH ROW
+BEGIN
+    INSERT INTO Library_Audit (action_type, change_time, old_book_id, old_book_title, old_author)
+    VALUES ('DELETE', NOW(), OLD.book_id, OLD.book_title, OLD.author);
+END$$
+DELIMITER ;
+
+-- Test the triggers
+SELECT '--- Testing UPDATE ---' AS Action;
+UPDATE Library SET author = 'Silberschatz' WHERE book_id = 1;
+
+SELECT '--- Testing DELETE ---' AS Action;
+DELETE FROM Library WHERE book_id = 2;
+
+-- Check results
+SELECT * FROM Library;
+SELECT * FROM Library_Audit;

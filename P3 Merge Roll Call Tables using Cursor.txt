@@ -1,0 +1,69 @@
+-- Setup
+DROP TABLE IF EXISTS O_RollCall;
+DROP TABLE IF EXISTS N_RollCall;
+
+CREATE TABLE O_RollCall (
+    roll_no INT PRIMARY KEY,
+    stud_name VARCHAR(100)
+);
+
+CREATE TABLE N_RollCall (
+    roll_no INT PRIMARY KEY,
+    stud_name VARCHAR(100)
+);
+
+INSERT INTO O_RollCall VALUES (1, 'Rahul'), (2, 'Priya'), (3, 'Amit');
+INSERT INTO N_RollCall VALUES (2, 'Priya'), (4, 'Sneha'), (5, 'Rohan');
+
+-- Create the procedure
+DROP PROCEDURE IF EXISTS sp_merge_rollcall;
+DELIMITER $$
+CREATE PROCEDURE sp_merge_rollcall()
+BEGIN
+    DECLARE v_done INT DEFAULT FALSE;
+    DECLARE v_roll_no INT;
+    DECLARE v_stud_name VARCHAR(100);
+    DECLARE v_count INT;
+    
+    -- 1. Declare Cursor
+    DECLARE c_new_roll CURSOR FOR
+        SELECT roll_no, stud_name FROM N_RollCall;
+        
+    -- 2. Declare handler for when cursor is finished
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET v_done = TRUE;
+
+    -- 3. Open Cursor
+    OPEN c_new_roll;
+    
+    -- 4. Loop
+    read_loop: LOOP
+        FETCH c_new_roll INTO v_roll_no, v_stud_name;
+        IF v_done THEN
+            LEAVE read_loop;
+        END IF;
+        
+        -- Check if record exists
+        SELECT COUNT(*) INTO v_count
+        FROM O_RollCall
+        WHERE roll_no = v_roll_no;
+        
+        IF v_count = 0 THEN
+            INSERT INTO O_RollCall (roll_no, stud_name)
+            VALUES (v_roll_no, v_stud_name);
+            SELECT CONCAT('Merged new student: ', v_stud_name) AS Message;
+        ELSE
+            SELECT CONCAT('Skipped duplicate student: ', v_stud_name) AS Message;
+        END IF;
+        
+    END LOOP read_loop; -- Correct 'LOOP' syntax
+    
+    -- 5. Close cursor
+    CLOSE c_new_roll;
+END$$
+DELIMITER ;
+
+-- Run the procedure
+CALL sp_merge_rollcall();
+
+-- Check results
+SELECT * FROM O_RollCall;

@@ -1,0 +1,64 @@
+-- Setup
+DROP TABLE IF EXISTS Result;
+DROP TABLE IF EXISTS Stud_Marks;
+
+CREATE TABLE Stud_Marks (
+    Roll INT PRIMARY KEY,
+    Name VARCHAR(100),
+    total_marks INT
+);
+CREATE TABLE Result (
+    Roll INT,
+    Name VARCHAR(100),
+    Class VARCHAR(50)
+);
+INSERT INTO Stud_Marks VALUES (1, 'Ravi', 1200), (2, 'Sita', 950), (3, 'Gita', 850), (4, 'Amit', 700);
+
+-- Create the procedure
+DROP PROCEDURE IF EXISTS proc_Grade;
+DELIMITER $$
+CREATE PROCEDURE proc_Grade()
+BEGIN
+    DECLARE v_class VARCHAR(50);
+    DECLARE v_roll INT;
+    DECLARE v_name VARCHAR(100);
+    DECLARE v_marks INT;
+    DECLARE v_done INT DEFAULT FALSE;
+
+    DECLARE c_stud CURSOR FOR
+        SELECT Roll, Name, total_marks FROM Stud_Marks;
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET v_done = TRUE;
+    
+    TRUNCATE TABLE Result;
+
+    OPEN c_stud;
+    read_loop: LOOP
+        FETCH c_stud INTO v_roll, v_name, v_marks;
+        IF v_done THEN
+            LEAVE read_loop;
+        END IF;
+
+        IF v_marks >= 990 AND v_marks <= 1500 THEN
+            SET v_class = 'Distinction';
+        ELSEIF v_marks >= 900 AND v_marks <= 989 THEN
+            SET v_class = 'First Class';
+        ELSEIF v_marks >= 825 AND v_marks <= 899 THEN
+            SET v_class = 'Higher Second Class';
+        ELSE
+            SET v_class = 'Pass / Fail';
+        END IF;
+        
+        INSERT INTO Result (Roll, Name, Class)
+        VALUES (v_roll, v_name, v_class);
+    END LOOP read_loop;
+    CLOSE c_stud;
+    
+    SELECT 'Result table populated successfully.' AS Message;
+END$$
+DELIMITER ;
+
+-- Run the procedure
+CALL proc_Grade();
+
+-- Check results
+SELECT * FROM Result;

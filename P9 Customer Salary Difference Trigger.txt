@@ -1,0 +1,73 @@
+-- Setup
+DROP TABLE IF EXISTS CUSTOMERS_SAL;
+DROP TABLE IF EXISTS Salary_Diff_Log;
+
+CREATE TABLE CUSTOMERS_SAL (
+    id INT PRIMARY KEY,
+    name VARCHAR(100),
+    salary DECIMAL(10, 2)
+);
+-- New table to store the "displayed" info
+CREATE TABLE Salary_Diff_Log (
+    log_id INT PRIMARY KEY AUTO_INCREMENT,
+    action VARCHAR(20),
+    cust_id INT,
+    old_salary DECIMAL(10,2),
+    new_salary DECIMAL(10,2),
+    difference DECIMAL(10,2),
+    log_time TIMESTAMP DEFAULT NOW()
+);
+
+-- Trigger for INSERT
+DROP TRIGGER IF EXISTS trg_customer_sal_insert;
+DELIMITER $$
+CREATE TRIGGER trg_customer_sal_insert
+AFTER INSERT ON CUSTOMERS_SAL
+FOR EACH ROW
+BEGIN
+    INSERT INTO Salary_Diff_Log (action, cust_id, old_salary, new_salary, difference)
+    VALUES ('INSERT', NEW.id, NULL, NEW.salary, NULL);
+END$$
+DELIMITER ;
+
+-- Trigger for UPDATE (BEFORE)
+DROP TRIGGER IF EXISTS trg_customer_sal_update;
+DELIMITER $$
+CREATE TRIGGER trg_customer_sal_update
+BEFORE UPDATE ON CUSTOMERS_SAL
+FOR EACH ROW
+BEGIN
+    DECLARE v_salary_diff DECIMAL(10, 2);
+    -- Only log if salary is actually changing
+    IF OLD.salary != NEW.salary THEN
+        SET v_salary_diff = NEW.salary - OLD.salary;
+        INSERT INTO Salary_Diff_Log (action, cust_id, old_salary, new_salary, difference)
+        VALUES ('UPDATE', OLD.id, OLD.salary, NEW.salary, v_salary_diff);
+    END IF;
+END$$
+DELIMITER ;
+
+-- Trigger for DELETE (BEFORE)
+DROP TRIGGER IF EXISTS trg_customer_sal_delete;
+DELIMITER $$
+CREATE TRIGGER trg_customer_sal_delete
+BEFORE DELETE ON CUSTOMERS_SAL
+FOR EACH ROW
+BEGIN
+    INSERT INTO Salary_Diff_Log (action, cust_id, old_salary, new_salary, difference)
+    VALUES ('DELETE', OLD.id, OLD.salary, NULL, NULL);
+END$$
+DELIMITER ;
+
+-- Test
+SELECT '--- Testing INSERT ---' AS Action;
+INSERT INTO CUSTOMERS_SAL VALUES (1, 'Gopal', 50000);
+
+SELECT '--- Testing UPDATE ---' AS Action;
+UPDATE CUSTOMERS_SAL SET salary = 55000 WHERE id = 1;
+
+SELECT '--- Testing DELETE ---' AS Action;
+DELETE FROM CUSTOMERS_SAL WHERE id = 1;
+
+-- Check results
+SELECT * FROM Salary_Diff_Log;

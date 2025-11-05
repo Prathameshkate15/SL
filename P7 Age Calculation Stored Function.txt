@@ -1,0 +1,37 @@
+-- Create the procedure
+DROP PROCEDURE IF EXISTS sp_Age_calc;
+DELIMITER $$
+CREATE PROCEDURE sp_Age_calc(
+    IN p_dob DATE,
+    OUT p_years INT,
+    OUT p_months INT,
+    OUT p_days INT
+)
+BEGIN
+    -- Corrected, robust logic for MySQL
+    DECLARE v_total_months INT;
+    DECLARE v_date_after_months DATE;
+
+    -- Total years
+    SET p_years = TIMESTAMPDIFF(YEAR, p_dob, CURDATE());
+    
+    -- Total months
+    SET v_total_months = TIMESTAMPDIFF(MONTH, p_dob, CURDATE());
+    
+    -- Remaining months
+    SET p_months = v_total_months % 12;
+    
+    -- Date after adding the total months (years + remaining months)
+    SET v_date_after_months = DATE_ADD(p_dob, INTERVAL v_total_months MONTH);
+    
+    -- Remaining days
+    SET p_days = DATEDIFF(CURDATE(), v_date_after_months);
+
+END$$
+DELIMITER ;
+
+-- Run (MySQL uses session variables '@' to receive OUT parameters)
+CALL sp_Age_calc('1990-05-15', @y, @m, @d);
+
+-- Check the results
+SELECT @y AS years, @m AS months, @d AS days;

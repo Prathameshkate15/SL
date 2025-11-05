@@ -1,0 +1,107 @@
+-- Setup
+DROP TABLE IF EXISTS Tracking;
+DROP TABLE IF EXISTS Emp;
+
+CREATE TABLE Emp (
+    Emp_no INT PRIMARY KEY,
+    Emp_name VARCHAR(100),
+    Emp_salary DECIMAL(10, 2)
+);
+CREATE TABLE Tracking (
+    track_id INT PRIMARY KEY AUTO_INCREMENT,
+    Emp_no INT,
+    Emp_salary DECIMAL(10, 2),
+    action VARCHAR(10),
+    track_time TIMESTAMP DEFAULT NOW()
+);
+
+-- BEFORE INSERT Trigger (Validation)
+DROP TRIGGER IF EXISTS trg_emp_check_insert;
+DELIMITER $$
+CREATE TRIGGER trg_emp_check_insert
+BEFORE INSERT ON Emp
+FOR EACH ROW
+BEGIN
+    IF NEW.Emp_salary < 50000 THEN
+        -- This is how you raise an error in MySQL
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Insert Failed: Salary is less than 50,000.';
+    END IF;
+END$$
+DELIMITER ;
+
+-- AFTER INSERT Trigger (Logging)
+DROP TRIGGER IF EXISTS trg_emp_log_insert;
+DELIMITER $$
+CREATE TRIGGER trg_emp_log_insert
+AFTER INSERT ON Emp
+FOR EACH ROW
+BEGIN
+    INSERT INTO Tracking (Emp_no, Emp_salary, action)
+    VALUES (NEW.Emp_no, NEW.Emp_salary, 'INSERT');
+END$$
+DELIMITER ;
+
+-- BEFORE UPDATE Trigger (Validation)
+DROP TRIGGER IF EXISTS trg_emp_check_update;
+DELIMITER $$
+CREATE TRIGGER trg_emp_check_update
+BEFORE UPDATE ON Emp
+FOR EACH ROW
+BEGIN
+    IF NEW.Emp_salary < 50000 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Update Failed: Salary is less than 50,000.';
+    END IF;
+END$$
+DELIMITER ;
+            
+-- AFTER UPDATE Trigger (Logging)
+DROP TRIGGER IF EXISTS trg_emp_log_update;
+DELIMITER $$
+CREATE TRIGGER trg_emp_log_update
+AFTER UPDATE ON Emp
+FOR EACH ROW
+BEGIN
+    INSERT INTO Tracking (Emp_no, Emp_salary, action)
+    VALUES (NEW.Emp_no, NEW.Emp_salary, 'UPDATE');
+END$$
+DELIMITER ;
+
+-- AFTER DELETE Trigger (Logging)
+DROP TRIGGER IF EXISTS trg_emp_log_delete;
+DELIMITER $$
+CREATE TRIGGER trg_emp_log_delete
+AFTER DELETE ON Emp
+FOR EACH ROW
+BEGIN
+    INSERT INTO Tracking (Emp_no, Emp_salary, action)
+    VALUES (OLD.Emp_no, OLD.Emp_salary, 'DELETE');
+END$$
+DELIMITER ;
+
+-- --- Test All Triggers ---
+
+-- Test 1: Valid INSERT (should work)
+SELECT '--- Testing Valid INSERT (>= 50k) ---' AS Action;
+INSERT INTO Emp VALUES (1, 'Rahul', 60000);
+
+-- Test 2: Valid UPDATE (should work)
+SELECT '--- Testing Valid UPDATE (>= 50k) ---' AS Action;
+UPDATE Emp SET Emp_salary = 65000 WHERE Emp_no = 1;
+
+-- Test 3: Invalid INSERT (should fail)
+SELECT '--- Testing Invalid INSERT (< 50k) ---' AS Action;
+INSERT INTO Emp VALUES (2, 'Priya', 40000);
+
+-- Test 4: Invalid UPDATE (should fail)
+SELECT '--- Testing Invalid UPDATE (< 50k) ---' AS Action;
+UPDATE Emp SET Emp_salary = 45000 WHERE Emp_no = 1;
+
+-- Test 5: DELETE (should work)
+SELECT '--- Testing DELETE ---' AS Action;
+DELETE FROM Emp WHERE Emp_no = 1;
+
+-- Check results
+SELECT * FROM Emp;
+SELECT * FROM Tracking;

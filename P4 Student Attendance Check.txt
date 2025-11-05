@@ -1,0 +1,56 @@
+-- Setup
+DROP TABLE IF EXISTS Student;
+CREATE TABLE Student (
+    Roll INT PRIMARY KEY,
+    Name VARCHAR(100),
+    Attendance DECIMAL(5, 2),
+    Status VARCHAR(20)
+);
+INSERT INTO Student VALUES (101, 'Ravi', 80.00, NULL);
+INSERT INTO Student VALUES (102, 'Sita', 72.50, NULL);
+INSERT INTO Student VALUES (103, 'Gita', 90.00, NULL);
+
+-- Create the procedure
+DROP PROCEDURE IF EXISTS sp_check_attendance;
+DELIMITER $$
+CREATE PROCEDURE sp_check_attendance(IN p_roll_no INT)
+BEGIN
+    DECLARE v_attendance DECIMAL(5, 2);
+    DECLARE v_status VARCHAR(20);
+    DECLARE v_message VARCHAR(100);
+    DECLARE v_not_found INT DEFAULT 0;
+    
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET v_not_found = 1;
+
+    SELECT Attendance INTO v_attendance
+    FROM Student
+    WHERE Roll = p_roll_no;
+    
+    IF v_not_found = 1 THEN
+        SELECT CONCAT('Error: Roll No. ', p_roll_no, ' not found.') AS Message;
+    ELSE
+        IF v_attendance < 75 THEN
+            SET v_message = 'Term not granted';
+            SET v_status = 'Detained';
+        ELSE
+            SET v_message = 'Term granted';
+            SET v_status = 'Not Detained';
+        END IF;
+
+        UPDATE Student SET Status = v_status WHERE Roll = p_roll_no;
+        
+        SELECT CONCAT('Roll No: ', p_roll_no) AS Student, 
+               CONCAT('Attendance: ', v_attendance, '%') AS Att,
+               CONCAT('Result: ', v_message) AS Result,
+               CONCAT('Status updated to: ', v_status) AS Status;
+    END IF;
+END$$
+DELIMITER ;
+
+-- Run the procedure
+CALL sp_check_attendance(101);
+CALL sp_check_attendance(102);
+CALL sp_check_attendance(104); -- Test for 'not found'
+
+-- Check results
+SELECT * FROM Student;

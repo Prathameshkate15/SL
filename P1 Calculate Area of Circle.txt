@@ -1,0 +1,30 @@
+-- Setup: Create the 'areas' table
+DROP TABLE IF EXISTS areas;
+CREATE TABLE areas (
+    radius INT,
+    area DECIMAL(10, 2)
+);
+
+-- Create the procedure
+DROP PROCEDURE IF EXISTS sp_calculate_areas;
+DELIMITER $$
+CREATE PROCEDURE sp_calculate_areas()
+BEGIN
+    DECLARE v_radius INT DEFAULT 5;
+    DECLARE v_pi DECIMAL(10, 5) DEFAULT 3.14159;
+    DECLARE v_area DECIMAL(10, 2);
+
+    WHILE v_radius <= 9 DO
+        SET v_area = v_pi * v_radius * v_radius;
+        INSERT INTO areas (radius, area) VALUES (v_radius, v_area);
+        SELECT CONCAT('Inserted: Radius=', v_radius, ', Area=', v_area) AS Message;
+        SET v_radius = v_radius + 1;
+    END WHILE; -- <-- Corrected Line
+END$$
+DELIMITER ;
+
+-- Run the procedure
+CALL sp_calculate_areas();
+
+-- Check the results
+SELECT * FROM areas;

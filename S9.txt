@@ -1,0 +1,93 @@
+SET foreign_key_checks=0;
+DROP TABLE IF EXISTS PURCHASE;
+DROP TABLE IF EXISTS CUSTOMERS;
+DROP TABLE IF EXISTS ITEMS;
+DROP VIEW IF EXISTS StationaryView;
+SET foreign_key_checks=1;
+
+CREATE TABLE CUSTOMERS (
+    CNO VARCHAR(10) PRIMARY KEY,
+    Cname VARCHAR(100) NOT NULL,
+    Ccity VARCHAR(100),
+    CMobile VARCHAR(15)
+);
+
+CREATE TABLE ITEMS (
+    INO VARCHAR(10) PRIMARY KEY,
+    Iname VARCHAR(100),
+    Itype VARCHAR(100),
+    Iprice DECIMAL(10, 2),
+    Icount INT
+);
+
+CREATE TABLE PURCHASE (
+    PNo VARCHAR(10) PRIMARY KEY,
+    Pdate DATE,
+    Pquantity INT,
+    CNO VARCHAR(10),
+    INO VARCHAR(10),
+    FOREIGN KEY (CNO) REFERENCES CUSTOMERS(CNO),
+    FOREIGN KEY (INO) REFERENCES ITEMS(INO)
+);
+
+-- Insert sample data
+INSERT INTO CUSTOMERS VALUES ('C1', 'Gopal', 'Pune', '9888888888');
+INSERT INTO CUSTOMERS VALUES ('C2', 'Maya', 'Mumbai', '9777777777');
+INSERT INTO CUSTOMERS VALUES ('C3', 'Ravi', 'Pune', '9666666666');
+INSERT INTO CUSTOMERS VALUES ('C4', 'Sita', 'Delhi', '9555555555');
+
+INSERT INTO ITEMS VALUES ('I1', 'Laptop', 'Electronics', 50000, 10);
+INSERT INTO ITEMS VALUES ('I2', 'Stapler', 'Stationary', 450, 100);
+INSERT INTO ITEMS VALUES ('I3', 'Pen Set', 'Stationary', 800, 200);
+INSERT INTO ITEMS VALUES ('I4', 'Notebook', 'Stationary', 150, 300);
+INSERT INTO ITEMS VALUES ('I5', 'Desk Lamp', 'Stationary', 1200, 50);
+
+INSERT INTO PURCHASE VALUES ('P1', '2025-11-01', 1, 'C2', 'I1');
+INSERT INTO PURCHASE VALUES ('P2', '2025-11-02', 5, 'C2', 'I3');
+INSERT INTO PURCHASE VALUES ('P3', '2025-11-03', 2, 'C1', 'I2');
+INSERT INTO PURCHASE VALUES ('P4', '2025-11-01', 10, 'C3', 'I4');
+INSERT INTO PURCHASE VALUES ('P5', '2025-11-04', 1, 'C2', 'I5');
+
+-- 1. List all stationary items with price between 400/- to 1000/-
+SELECT *
+FROM ITEMS
+WHERE Itype = 'Stationary' AND Iprice BETWEEN 400 AND 1000;
+
+-- 2. Change the mobile number of customer "Gopal"
+UPDATE CUSTOMERS
+SET CMobile = '9999999999'
+WHERE Cname = 'Gopal';
+-- (You can run this to check the update)
+SELECT * FROM CUSTOMERS WHERE Cname = 'Gopal';
+
+-- 3. Display the item with maximum price
+SELECT *
+FROM ITEMS
+WHERE Iprice = (SELECT MAX(Iprice) FROM ITEMS);
+
+-- 4. Display all purchases sorted from the most recent to the oldest
+SELECT *
+FROM PURCHASE
+ORDER BY Pdate DESC;
+
+-- 5. Count the number of customers in every city
+SELECT Ccity, COUNT(CNO) AS NumberOfCustomers
+FROM CUSTOMERS
+GROUP BY Ccity;
+
+-- 6. Display all purchased quantity of Customer "Maya"
+SELECT p.PNo, i.Iname, p.Pquantity
+FROM PURCHASE p
+JOIN CUSTOMERS c ON p.CNO = c.CNO
+JOIN ITEMS i ON p.INO = i.INO
+WHERE c.Cname = 'Maya';
+
+-- 7. Create view which shows Iname, Price and Count of all stationary items in descending order of price.
+CREATE VIEW StationaryView AS
+SELECT Iname, Iprice, Icount
+FROM ITEMS
+WHERE Itype = 'Stationary'
+ORDER BY Iprice DESC;
+
+-- (You can run this to check the view)
+SELECT * FROM StationaryView;

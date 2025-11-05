@@ -1,0 +1,131 @@
+SET foreign_key_checks=0;
+DROP TABLE IF EXISTS Borrower;
+DROP TABLE IF EXISTS Depositor;
+DROP TABLE IF EXISTS Loan;
+DROP TABLE IF EXISTS Account;
+DROP TABLE IF EXISTS Customer;
+DROP TABLE IF EXISTS Branch;
+DROP VIEW IF EXISTS View1;
+DROP VIEW IF EXISTS View2;
+DROP VIEW IF EXISTS View3;
+SET foreign_key_checks=1;
+
+-- 1. CREATE TABLES
+CREATE TABLE Branch (
+    branch_name VARCHAR(100) PRIMARY KEY,
+    branch_city VARCHAR(100) NOT NULL,
+    assets DECIMAL(12, 2)
+);
+CREATE TABLE Customer (
+    cust_name VARCHAR(100) PRIMARY KEY,
+    cust_street VARCHAR(100),
+    cust_city VARCHAR(100)
+);
+CREATE TABLE Account (
+    Acc_no VARCHAR(20) PRIMARY KEY,
+    branch_name VARCHAR(100),
+    balance DECIMAL(10, 2) NOT NULL,
+    FOREIGN KEY (branch_name) REFERENCES Branch(branch_name)
+);
+CREATE TABLE Loan (
+    loan_no VARCHAR(20) PRIMARY KEY,
+    branch_name VARCHAR(100),
+    amount DECIMAL(10, 2) NOT NULL,
+    FOREIGN KEY (branch_name) REFERENCES Branch(branch_name)
+);
+CREATE TABLE Depositor (
+    cust_name VARCHAR(100),
+    acc_no VARCHAR(20),
+    PRIMARY KEY (cust_name, acc_no),
+    FOREIGN KEY (cust_name) REFERENCES Customer(cust_name),
+    FOREIGN KEY (acc_no) REFERENCES Account(Acc_no)
+);
+CREATE TABLE Borrower (
+    cust_name VARCHAR(100),
+    loan_no VARCHAR(20),
+    PRIMARY KEY (cust_name, loan_no),
+    FOREIGN KEY (cust_name) REFERENCES Customer(cust_name),
+    FOREIGN KEY (loan_no) REFERENCES Loan(loan_no)
+);
+
+-- 2. INSERT DATA
+INSERT INTO Branch VALUES ('Pune Station', 'Pune', 5000000);
+INSERT INTO Branch VALUES ('MG Road', 'Mumbai', 9000000);
+INSERT INTO Branch VALUES ('Deccan', 'Pune', 8200000);
+
+INSERT INTO Customer VALUES ('Rahul', '123 Main St', 'Pune');
+INSERT INTO Customer VALUES ('Priya', '456 Oak Ave', 'Mumbai');
+INSERT INTO Customer VALUES ('Amit', '789 Pine Ln', 'Pune');
+INSERT INTO Customer VALUES ('Sneha', '321 Elm Blvd', 'Delhi');
+INSERT INTO Customer VALUES ('Rohan', '654 Maple Dr', 'Pune');
+INSERT INTO Customer VALUES ('Ajay', '555 Lake Dr', 'Mumbai');
+
+INSERT INTO Account VALUES ('A-201', 'Pune Station', 22000);
+INSERT INTO Account VALUES ('A-202', 'MG Road', 30000);
+INSERT INTO Account VALUES ('A-203', 'Deccan', 5000);
+INSERT INTO Account VALUES ('A-204', 'Pune Station', 7000);
+INSERT INTO Depositor VALUES ('Rahul', 'A-201');
+INSERT INTO Depositor VALUES ('Priya', 'A-202');
+INSERT INTO Depositor VALUES ('Amit', 'A-203');
+INSERT INTO Depositor VALUES ('Sneha', 'A-204');
+
+INSERT INTO Loan VALUES ('L-101', 'Pune Station', 15000);
+INSERT INTO Loan VALUES ('L-102', 'MG Road', 25000);
+INSERT INTO Loan VALUES ('L-103', 'Deccan', 10000);
+INSERT INTO Loan VALUES ('L-105', 'Pune Station', 20000);
+INSERT INTO Loan VALUES ('L-106', 'MG Road', 8000);
+INSERT INTO Borrower VALUES ('Rahul', 'L-101');
+INSERT INTO Borrower VALUES ('Priya', 'L-102');
+INSERT INTO Borrower VALUES ('Amit', 'L-103');
+INSERT INTO Borrower VALUES ('Rohan', 'L-105');
+INSERT INTO Borrower VALUES ('Ajay', 'L-106');
+
+-- 3. RUN S7 QUERIES
+-- 1. Create a View1 to display List all customers in alphabetical order who have loan from Pune Station branch.
+CREATE VIEW View1 AS
+SELECT b.cust_name
+FROM Borrower b
+JOIN Loan l ON b.loan_no = l.loan_no
+WHERE l.branch_name = 'Pune Station'
+ORDER BY b.cust_name ASC;
+
+SELECT * FROM View1;
+
+-- 2. Create View2 on branch table by selecting any two columns and perform insert update delete operations.
+CREATE VIEW View2 AS
+SELECT branch_name, branch_city
+FROM Branch;
+
+INSERT INTO View2 VALUES ('Koregaon Park', 'Pune');
+UPDATE View2 SET branch_city = 'New Delhi' WHERE branch_name = 'Deccan';
+DELETE FROM View2 WHERE branch_name = 'MG Road';
+
+SELECT * FROM View2;
+
+-- 3. Create View3 on borrower and depositor table by selecting any one column from each
+CREATE VIEW View3 AS
+SELECT d.cust_name, b.loan_no
+FROM Depositor d
+JOIN Borrower b ON d.cust_name = b.cust_name;
+
+SELECT * FROM View3;
+
+-- 4. Create Union of left and right joint for all customers who have an account or loan or both at bank
+(SELECT d.cust_name, d.acc_no, b.loan_no
+FROM Depositor d
+LEFT JOIN Borrower b ON d.cust_name = b.cust_name)
+UNION
+(SELECT b.cust_name, d.acc_no, b.loan_no
+FROM Depositor d
+RIGHT JOIN Borrower b ON d.cust_name = b.cust_name);
+
+-- 5. Create Simple and Unique index.
+CREATE INDEX idx_city ON Customer (cust_city);
+CREATE UNIQUE INDEX idx_acc ON Account (Acc_no);
+
+-- 6. Display index Information.
+SHOW INDEX FROM Customer;
+SHOW INDEX FROM Account;
+
+
+

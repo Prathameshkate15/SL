@@ -1,0 +1,63 @@
+-- Setup
+DROP TABLE IF EXISTS increment_salary;
+DROP TABLE IF EXISTS emp;
+
+CREATE TABLE emp (
+    emp_no INT PRIMARY KEY,
+    salary DECIMAL(10, 2)
+);
+-- MySQL uses AUTO_INCREMENT for identity
+CREATE TABLE increment_salary (
+    log_id INT PRIMARY KEY AUTO_INCREMENT,
+    emp_no INT,
+    new_salary DECIMAL(10, 2),
+    log_date DATETIME
+);
+INSERT INTO emp VALUES (1, 40000), (2, 60000), (3, 80000), (4, 45000);
+
+-- Create the procedure
+DROP PROCEDURE IF EXISTS sp_increase_salary;
+DELIMITER $$
+CREATE PROCEDURE sp_increase_salary()
+BEGIN
+    DECLARE v_avg_salary DECIMAL(10, 2);
+    DECLARE v_new_salary DECIMAL(10, 2);
+    DECLARE v_emp_no INT;
+    DECLARE v_salary DECIMAL(10, 2);
+    DECLARE v_done INT DEFAULT FALSE;
+    
+    DECLARE c_emp CURSOR FOR
+        SELECT emp_no, salary FROM emp;
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET v_done = TRUE;
+
+    SELECT AVG(salary) INTO v_avg_salary FROM emp;
+    SELECT CONCAT('Average Salary: ', v_avg_salary) AS Message;
+
+    OPEN c_emp;
+    read_loop: LOOP
+        FETCH c_emp INTO v_emp_no, v_salary;
+        IF v_done THEN
+            LEAVE read_loop;
+        END IF;
+        
+        IF v_salary < v_avg_salary THEN
+            SET v_new_salary = v_salary * 1.10;
+            
+            UPDATE emp SET salary = v_new_salary WHERE emp_no = v_emp_no;
+            
+            INSERT INTO increment_salary (emp_no, new_salary, log_date)
+            VALUES (v_emp_no, v_new_salary, NOW());
+            
+            SELECT CONCAT('Updated Emp ', v_emp_no, ': Old=', v_salary, ', New=' , v_new_salary) AS Message;
+        END IF;
+    END LOOP read_loop;
+    CLOSE c_emp;
+END$$
+DELIMITER ;
+
+-- Run the procedure
+CALL sp_increase_salary();
+
+-- Check results
+SELECT * FROM emp;
+SELECT * FROM increment_salary;

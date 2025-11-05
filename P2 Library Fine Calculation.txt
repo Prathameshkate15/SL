@@ -1,0 +1,80 @@
+-- Setup
+DROP TABLE IF EXISTS Fine;
+DROP TABLE IF EXISTS Borrower;
+
+CREATE TABLE Borrower (
+    Rollin VARCHAR(10) PRIMARY KEY,
+    Name VARCHAR(100),
+    DateofIssue DATE,
+    NameofBook VARCHAR(100),
+    Status CHAR(1) -- 'I' for Issued, 'R' for Returned
+);
+
+CREATE TABLE Fine (
+    Roll_no VARCHAR(10),
+    Fine_Date DATE,
+    Amt DECIMAL(10, 2)
+);
+
+-- Sample Data (uses CURDATE() and INTERVAL)
+INSERT INTO Borrower VALUES ('R101', 'Amit', CURDATE() - INTERVAL 40 DAY, 'Database Systems', 'I');
+INSERT INTO Borrower VALUES ('R102', 'Priya', CURDATE() - INTERVAL 20 DAY, 'Operating Systems', 'I');
+
+-- Create the procedure
+DROP PROCEDURE IF EXISTS sp_calculate_fine;
+DELIMITER $$
+CREATE PROCEDURE sp_calculate_fine(
+    IN p_roll_no VARCHAR(10),
+    IN p_book_name VARCHAR(100)
+)
+BEGIN
+    DECLARE v_issue_date DATE;
+    DECLARE v_days INT;
+    DECLARE v_fine DECIMAL(10, 2) DEFAULT 0;
+    DECLARE v_not_found INT DEFAULT 0;
+
+    -- Handler for 'No Data Found'
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET v_not_found = 1;
+
+    SELECT DateofIssue INTO v_issue_date
+    FROM Borrower
+    WHERE Rollin = p_roll_no AND NameofBook = p_book_name AND Status = 'I';
+
+    IF v_not_found = 1 THEN
+        SELECT 'Error: No active issued book found for that Roll No and Book Name.' AS Message;
+    ELSE
+        -- MySQL uses DATEDIFF to find the number of days
+        SET v_days = DATEDIFF(CURDATE(), v_issue_date);
+        
+        SELECT CONCAT('Roll No: ', p_roll_no, ', Book: ', p_book_name, ', Days: ', v_days) AS Message;
+
+        IF v_days > 30 THEN
+            SET v_fine = ( (v_days - 30) * 50 ) + ( 15 * 5 );
+        ELSEIF v_days > 15 THEN
+            SET v_fine = (v_days - 15) * 5;
+        END IF;
+
+        IF v_fine > 0 THEN
+            INSERT INTO Fine (Roll_no, Fine_Date, Amt)
+            VALUES (p_roll_no, CURDATE(), v_fine);
+            SELECT CONCAT('Fine calculated: Rs. ', v_fine, '. Record added.') AS Message;
+        ELSE
+            SELECT 'No fine applicable.' AS Message;
+        END IF;
+
+        UPDATE Borrower
+        SET Status = 'R'
+        WHERE Rollin = p_roll_no AND NameofBook = p_book_name;
+        
+        SELECT 'Book status updated to ''Returned''.' AS Message;
+    END IF;
+END$$
+DELIMITER ;
+
+-- Run the procedure
+CALL sp_calculate_fine('R101', 'Database Systems');
+CALL sp_calculate_fine('R102', 'Operating Systems');
+
+-- Check results
+SELECT * FROM Fine;
+SELECT * FROM Borrower;

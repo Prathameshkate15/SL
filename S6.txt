@@ -1,0 +1,110 @@
+SET foreign_key_checks=0;
+DROP TABLE IF EXISTS Manages;
+DROP TABLE IF EXISTS Management;
+DROP TABLE IF EXISTS Works;
+DROP TABLE IF EXISTS Employee;
+DROP TABLE IF EXISTS Company;
+SET foreign_key_checks=1;
+
+-- 1. CREATE TABLES
+CREATE TABLE Employee (
+    emp_id VARCHAR(10) PRIMARY KEY,
+    employee_name VARCHAR(100) UNIQUE NOT NULL,
+    street VARCHAR(100),
+    city VARCHAR(100)
+);
+
+CREATE TABLE Company (
+    company_name VARCHAR(100) PRIMARY KEY,
+    city VARCHAR(100)
+);
+
+CREATE TABLE Works (
+    employee_name VARCHAR(100) PRIMARY KEY,
+    company_name VARCHAR(100),
+    salary DECIMAL(10, 2),
+    FOREIGN KEY (employee_name) REFERENCES Employee(employee_name),
+    FOREIGN KEY (company_name) REFERENCES Company(company_name)
+);
+
+CREATE TABLE Manages (
+    employee_name VARCHAR(100) PRIMARY KEY,
+    manager_name VARCHAR(100),
+    FOREIGN KEY (employee_name) REFERENCES Employee(employee_name)
+);
+
+-- 2. INSERT DATA
+-- TCS Avg = (8000+7500+9000)/3 = 8166.67
+-- InfoSys Avg = 12000
+-- TechM Avg = (15000+9000)/2 = 12000
+INSERT INTO Employee VALUES ('E101', 'Amit', '123 Main St', 'Pune');
+INSERT INTO Employee VALUES ('E102', 'Rahul', '456 Oak Ave', 'Mumbai');
+INSERT INTO Employee VALUES ('E103', 'Priya', '789 Pine Ln', 'Banglore');
+INSERT INTO Employee VALUES ('E104', 'Sneha', '321 Elm Blvd', 'Delhi');
+INSERT INTO Employee VALUES ('E105', 'Rohan', '654 Maple Dr', 'Pune');
+INSERT INTO Employee VALUES ('E106', 'Vikram', '999 Park St', 'Pune');
+
+INSERT INTO Company VALUES ('TCS', 'Pune');
+INSERT INTO Company VALUES ('InfoSys', 'Mumbai');
+INSERT INTO Company VALUES ('TechM', 'Banglore');
+
+INSERT INTO Works VALUES ('Amit', 'TCS', 8000);
+INSERT INTO Works VALUES ('Rahul', 'InfoSys', 12000);
+INSERT INTO Works VALUES ('Priya', 'TechM', 15000);
+INSERT INTO Works VALUES ('Sneha', 'TechM', 9000);
+INSERT INTO Works VALUES ('Rohan', 'TCS', 7500);
+INSERT INTO Works VALUES ('Vikram', 'TCS', 9000);
+
+INSERT INTO Manages VALUES ('Amit', 'Mr. Sharma');
+INSERT INTO Manages VALUES ('Rahul', 'Mr. Gupta');
+
+-- 3. RUN S6 QUERIES
+-- 1. Change the city of employee working with InfoSys to 'Bangalore'
+UPDATE Employee
+SET city = 'Bangalore'
+WHERE employee_name IN (
+    SELECT employee_name FROM (
+        SELECT employee_name FROM Works WHERE company_name = 'InfoSys'
+    ) AS temp
+);
+
+-- 2. Find the names of all employees who earn more than the average
+--    salary of all employees of their company.
+SELECT w1.employee_name, w1.salary, w1.company_name
+FROM Works w1
+WHERE w1.salary > (
+    SELECT AVG(w2.salary)
+    FROM Works w2
+    WHERE w1.company_name = w2.company_name
+);
+
+-- 3. Find the names, street address, and cities of residence for all
+--    employees who work for 'TechM' and earn more than $10,000.
+SELECT e.employee_name, e.street, e.city
+FROM Employee e
+JOIN Works w ON e.employee_name = w.employee_name
+WHERE w.company_name = 'TechM' AND w.salary > 10000;
+
+-- 4. Change name of table Manages to Management.
+RENAME TABLE Manages TO Management;
+
+-- 5. Create Simple and Unique index on employee table.
+-- (Simple index on city)
+CREATE INDEX idx_city ON Employee (city);
+-- (Unique index on employee_name, which is already a unique key)
+-- We will just add a simple one to avoid errors, as it's already unique.
+-- If employee_name was not unique, this would be:
+-- CREATE UNIQUE INDEX idx_emp_name ON Employee (employee_name);
+-- But since it is, we'll just index street.
+CREATE INDEX idx_street ON Employee (street);
+
+-- 6. Display index Information
+SHOW INDEX FROM Employee;
+
+-- 4. VERIFICATION
+-- Check if Rahul's city is now Bangalore
+SELECT * FROM Employee WHERE employee_name = 'Rahul';
+
+-- Check if table was renamed
+SHOW TABLES;
+

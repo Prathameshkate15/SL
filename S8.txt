@@ -1,0 +1,82 @@
+SET foreign_key_checks=0;
+DROP TABLE IF EXISTS Orders;
+DROP TABLE IF EXISTS Companies;
+DROP VIEW IF EXISTS View1;
+DROP VIEW IF EXISTS View2;
+SET foreign_key_checks=1;
+
+-- 1. CREATE TABLES
+CREATE TABLE Companies (
+    comp_id VARCHAR(10) PRIMARY KEY,
+    name VARCHAR(100),
+    cost DECIMAL(10, 2),
+    year INT
+);
+
+CREATE TABLE Orders (
+    comp_id VARCHAR(10),
+    domain VARCHAR(100),
+    quantity INT,
+    FOREIGN KEY (comp_id) REFERENCES Companies(comp_id)
+);
+
+-- 2. INSERT DATA
+-- Google/Apple have orders. Microsoft does not.
+INSERT INTO Companies VALUES ('C1', 'Google', 1500, 1998);
+INSERT INTO Companies VALUES ('C2', 'Apple', 2200, 1976);
+INSERT INTO Companies VALUES ('C3', 'Microsoft', 1800, 1975);
+
+INSERT INTO Orders VALUES ('C1', 'Search', 100);
+INSERT INTO Orders VALUES ('C1', 'Cloud', 50);
+INSERT INTO Orders VALUES ('C2', 'Hardware', 200);
+
+-- 3. RUN S8 QUERIES
+-- 1. Find names, costs, domains and quantities using inner join.
+SELECT c.name, c.cost, o.domain, o.quantity
+FROM Companies c
+INNER JOIN Orders o ON c.comp_id = o.comp_id;
+
+-- 2. Find names, costs, domains and quantities using left outer join.
+SELECT c.name, c.cost, o.domain, o.quantity
+FROM Companies c
+LEFT JOIN Orders o ON c.comp_id = o.comp_id;
+
+-- 3. Find names, costs, domains and quantities using right outer join.
+SELECT c.name, c.cost, o.domain, o.quantity
+FROM Companies c
+RIGHT JOIN Orders o ON c.comp_id = o.comp_id;
+
+-- 4. Find names, costs, domains and quantities using Union operator.
+-- (This simulates a FULL OUTER JOIN, which is the standard use of UNION with joins)
+(SELECT c.name, c.cost, o.domain, o.quantity
+FROM Companies c
+LEFT JOIN Orders o ON c.comp_id = o.comp_id)
+UNION
+(SELECT c.name, c.cost, o.domain, o.quantity
+FROM Companies c
+RIGHT JOIN Orders o ON c.comp_id = o.comp_id);
+
+-- 5. Create View View1 by selecting both tables to show company name and quantities.
+CREATE VIEW View1 AS
+SELECT c.name, o.quantity
+FROM Companies c
+JOIN Orders o ON c.comp_id = o.comp_id;
+
+-- 6. Create View View2 by selecting any two columns and perform DML.
+CREATE VIEW View2 AS
+SELECT comp_id, name FROM Companies;
+
+INSERT INTO View2 VALUES ('C4', 'Nvidia');
+UPDATE View2 SET name = 'Microsoft Inc' WHERE comp_id = 'C3';
+DELETE FROM View2 WHERE comp_id = 'C2';
+
+-- 7. Display content of View1, View2.
+SELECT * FROM View1;
+SELECT * FROM View2;
+
+-- 4. VERIFICATION
+-- Check that DML on View2 also affected the base table Companies
+SELECT * FROM Companies;
+
+
+
