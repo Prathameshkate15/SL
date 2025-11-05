@@ -1,0 +1,29 @@
+def job_scheduling(jobs):
+    # Sort jobs by profit (descending)
+    jobs.sort(key=lambda x: x[2], reverse=True)
+
+    n = len(jobs)
+    max_deadline = max(job[1] for job in jobs)
+    schedule = [-1] * (max_deadline + 1)
+    total_profit = 0
+
+    for job in jobs:
+        job_id, deadline, profit = job
+        for d in range(deadline, 0, -1):
+            if schedule[d] == -1:
+                schedule[d] = job_id
+                total_profit += profit
+                break
+
+    print("Job sequence:", [j for j in schedule if j != -1])
+    print("Total Profit:", total_profit)
+
+# Example (Job ID, Deadline, Profit)
+jobs = [
+    ('A', 2, 100),
+    ('B', 1, 19),
+    ('C', 2, 27),
+    ('D', 1, 25),
+    ('E', 3, 15)
+]
+job_scheduling(jobs)

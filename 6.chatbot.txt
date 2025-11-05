@@ -1,0 +1,41 @@
+# -------------------------------
+# Simple Customer Support Chatbot
+# -------------------------------
+
+def chatbot():
+    print("?? Hello! I'm ShopBot - your customer assistant.")
+    print("How can I help you today?")
+    print("Type 'bye' to end the chat.\n")
+
+    while True:
+        user_input = input("You: ").lower()
+
+        if user_input in ["hi", "hello", "hey"]:
+            print("Bot: Hello there! How can I assist you today? ??")
+
+        elif "product" in user_input:
+            print("Bot: We offer a wide range of products - electronics, fashion, and home essentials! ???")
+
+        elif "order" in user_input:
+            print("Bot: You can track your order by visiting your account ? Orders section ??")
+
+        elif "delivery" in user_input:
+            print("Bot: Standard delivery takes 3-5 business days. Express delivery options are also available ??")
+
+        elif "return" in user_input or "refund" in user_input:
+            print("Bot: You can request a return or refund within 7 days of delivery through your order page ??")
+
+        elif "contact" in user_input or "support" in user_input:
+            print("Bot: You can reach our support team at support@example.com or call 1800-123-4567 ??")
+
+        elif "bye" in user_input or "exit" in user_input:
+            print("Bot: Goodbye! Thanks for chatting with me. Have a great day! ??")
+            break
+
+        else:
+            print("Bot: Sorry, I didn't quite understand that. Could you please rephrase? ??")
+
+# Run the chatbot
+if __name__ == "__main__":
+    chatbot()
+

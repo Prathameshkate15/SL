@@ -1,0 +1,62 @@
+import heapq
+
+def dijkstra(graph, start):
+    """
+    Dijkstra's Algorithm for Single-Source Shortest Path
+    Uses Greedy strategy to always pick the nearest unvisited vertex.
+    """
+    # Number of vertices in the graph
+    n = len(graph)
+    
+    # Step 1: Initialize distances to infinity
+    distances = [float("inf")] * n
+    distances[start] = 0  # Distance to source = 0
+
+    # Step 2: Min-heap priority queue -> (distance, vertex)
+    pq = [(0, start)]
+
+    while pq:
+        # Step 3: Pick vertex with smallest distance
+        current_distance, u = heapq.heappop(pq)
+
+        # Step 4: Skip if we already found a shorter path
+        if current_distance > distances[u]:
+            continue
+
+        # Step 5: Explore neighbors
+        for v, weight in graph[u]:
+            distance = current_distance + weight
+
+            # Step 6: If found a shorter path, update
+            if distance < distances[v]:
+                distances[v] = distance
+                heapq.heappush(pq, (distance, v))
+
+    return distances
+
+
+# ------------------------------
+# Example: Graph Representation
+# ------------------------------
+# Graph as adjacency list (node: [(neighbor, weight), ...])
+graph = {
+    0: [(1, 4), (2, 1)],
+    1: [(3, 1)],
+    2: [(1, 2), (3, 5)],
+    3: [(4, 3)],
+    4: []
+}
+
+# Source vertex
+source = 0
+
+# Run Dijkstra's Algorithm
+shortest_distances = dijkstra(graph, source)
+
+# ------------------------------
+# Output the shortest paths
+# ------------------------------
+print("Single Source Shortest Path using Dijkstra's Algorithm (Greedy):")
+for vertex, distance in enumerate(shortest_distances):
+    print(f"Vertex {vertex} ? Distance = {distance}")
+
