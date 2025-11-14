@@ -1,0 +1,36 @@
+# Ignore compiled files
+*.o
+*.out
+*.exe
+*.class
+
+# Ignore IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
+
+# Ignore temporary files
+*.tmp
+*.temp
+sample.txt
+*.log
+
+# Ignore build directories
+build/
+dist/
+target/
+
+# Ignore dependencies
+node_modules/
+__pycache__/
+*.pyc
+
+# Ignore test output files
+test_output/
+*.test
